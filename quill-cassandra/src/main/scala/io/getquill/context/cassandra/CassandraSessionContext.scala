@@ -2,10 +2,9 @@ package io.getquill.context.cassandra
 
 import com.datastax.driver.core.{ Cluster, _ }
 import io.getquill.NamingStrategy
-import io.getquill.context.Context
-import io.getquill.context.cassandra.encoding.{ CassandraTypes, Decoders, Encoders, UdtEncoding }
 import io.getquill.util.Messages.fail
-import io.getquill.context.cassandra.util.FutureConversions._
+import util.FutureConversions._
+
 import scala.collection.JavaConverters._
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.Try
@@ -15,15 +14,7 @@ abstract class CassandraSessionContext[N <: NamingStrategy](
   cluster:                    Cluster,
   keyspace:                   String,
   preparedStatementCacheSize: Long
-)
-  extends Context[CqlIdiom, N]
-  with CassandraContext[N]
-  with Encoders
-  with Decoders
-  with CassandraTypes
-  with UdtEncoding {
-
-  val idiom = CqlIdiom
+) extends AbstractCassandraSessionContext[N] {
 
   override type PrepareRow = BoundStatement
   override type ResultRow = Row
@@ -69,9 +60,4 @@ abstract class CassandraSessionContext[N <: NamingStrategy](
       ()
     }
 
-  def executeActionReturning[O](sql: String, prepare: Prepare = identityPrepare, extractor: Extractor[O], returningColumn: String): Unit =
-    fail("Cassandra doesn't support `returning`.")
-
-  def executeBatchActionReturning[T](groups: List[BatchGroupReturning], extractor: Extractor[T]): Unit =
-    fail("Cassandra doesn't support `returning`.")
 }

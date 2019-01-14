@@ -1,14 +1,14 @@
 package io.getquill
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import io.getquill.context.cassandra.util.FutureConversions.toScalaFuture
-import io.getquill.util.{ ContextLogger, LoadConfig }
-import com.typesafe.config.Config
-import scala.collection.JavaConverters._
-import io.getquill.context.cassandra.CassandraSessionContext
 import com.datastax.driver.core.Cluster
+import com.typesafe.config.Config
+import io.getquill.context.cassandra.CassandraSessionContext
+import io.getquill.context.cassandra.util.FutureConversions.toScalaFuture
 import io.getquill.monad.ScalaFutureIOMonad
+import io.getquill.util.{ ContextLogger, LoadConfig }
+
+import scala.collection.JavaConverters._
+import scala.concurrent.{ ExecutionContext, Future }
 
 class CassandraAsyncContext[N <: NamingStrategy](
   naming:                     N,

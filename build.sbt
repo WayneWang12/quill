@@ -1,17 +1,18 @@
-import ReleaseTransformations._
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
-import scalariform.formatter.preferences._
-import sbtrelease.ReleasePlugin
-import scala.sys.process.Process
 import sbtcrossproject.crossProject
+import sbtrelease.ReleasePlugin
+import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
+import scalariform.formatter.preferences._
 
 enablePlugins(TutPlugin)
 
 lazy val modules = Seq[sbt.ClasspathDep[sbt.ProjectReference]](
   `quill-core-jvm`, `quill-core-js`, `quill-monix`, `quill-sql-jvm`, `quill-sql-js`,
   `quill-jdbc`, `quill-jdbc-monix`, `quill-finagle-mysql`, `quill-finagle-postgres`, `quill-async`,
-  `quill-async-mysql`, `quill-async-postgres`, `quill-cassandra`, `quill-cassandra-monix`, `quill-orientdb`,
-  `quill-spark`
+  `quill-async-mysql`, `quill-async-postgres`,
+  `quill-cassandra-core`, `quill-cassandra-monix`, 
+  `quill-cassandra`, `quill-cassandra-lagom`, 
+  `quill-orientdb`, `quill-spark`
 )
 
 lazy val `quill` =
@@ -201,8 +202,8 @@ lazy val `quill-async-postgres` =
     )
     .dependsOn(`quill-async` % "compile->compile;test->test")
 
-lazy val `quill-cassandra` =
-  (project in file("quill-cassandra"))
+lazy val `quill-cassandra-core` =
+  (project in file("quill-cassandra-core"))
     .settings(commonSettings: _*)
     .settings(mimaSettings: _*)
     .settings(
@@ -212,6 +213,32 @@ lazy val `quill-cassandra` =
       )
     )
     .dependsOn(`quill-core-jvm` % "compile->compile;test->test")
+
+lazy val `quill-cassandra` = 
+    (project in file("quill-cassandra"))
+    .settings(commonSettings: _*)
+    .settings(mimaSettings: _*)
+    .settings(
+      fork in Test := true
+    )
+    .dependsOn(`quill-cassandra-core` % "compile->compile;test->test")
+
+
+val lagomVersion = "1.5.0-RC1"
+
+lazy val `quill-cassandra-lagom` =
+  (project in file("quill-cassandra-lagom"))
+    .settings(commonSettings: _*)
+    .settings(mimaSettings: _*)
+    .settings(
+      fork in Test := true,
+      libraryDependencies ++= Seq(
+        "com.lightbend.lagom" %% "lagom-scaladsl-testkit" % lagomVersion % Test,
+        "com.lightbend.lagom" %% "lagom-scaladsl-persistence-cassandra" % lagomVersion % Provided
+      )
+    )
+    .dependsOn(`quill-cassandra-core` % "compile->compile;test->test")
+
 
 lazy val `quill-cassandra-monix` =
   (project in file("quill-cassandra-monix"))
@@ -282,8 +309,9 @@ def updateReadmeVersion(selectVersion: sbtrelease.Versions => String) =
 
     val newVersion = selectVersion(st.get(ReleaseKeys.versions).get)
 
-    import scala.io.Source
     import java.io.PrintWriter
+
+    import scala.io.Source
 
     val pattern = """"io.getquill" %% "quill-.*" % "(.*)"""".r
 

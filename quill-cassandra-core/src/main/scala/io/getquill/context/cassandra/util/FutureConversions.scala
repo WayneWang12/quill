@@ -1,9 +1,9 @@
 package io.getquill.context.cassandra.util
 
 import com.google.common.util.concurrent.{ FutureCallback, Futures, ListenableFuture }
-
-import scala.concurrent.{ Future, Promise }
-import scala.language.implicitConversions
+import scala.concurrent.Promise
+import scala.concurrent.Future
+import language.implicitConversions
 
 object FutureConversions {
 

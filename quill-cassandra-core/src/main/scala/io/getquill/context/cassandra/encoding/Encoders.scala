@@ -4,10 +4,10 @@ import java.nio.ByteBuffer
 import java.util.{ Date, UUID }
 
 import com.datastax.driver.core.LocalDate
-import io.getquill.context.cassandra.CassandraSessionContext
+import io.getquill.context.cassandra.AbstractCassandraSessionContext
 
 trait Encoders extends CollectionEncoders {
-  this: CassandraSessionContext[_] =>
+  this: AbstractCassandraSessionContext[_] =>
 
   type Encoder[T] = CassandraEncoder[T]
 

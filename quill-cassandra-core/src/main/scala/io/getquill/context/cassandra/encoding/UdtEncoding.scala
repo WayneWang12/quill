@@ -1,12 +1,12 @@
 package io.getquill.context.cassandra.encoding
 
 import com.datastax.driver.core.UDTValue
-import io.getquill.context.cassandra.{ CassandraSessionContext, Udt }
+import io.getquill.context.cassandra.{ AbstractCassandraSessionContext, Udt }
 
 import scala.language.experimental.macros
 
 trait UdtEncoding {
-  this: CassandraSessionContext[_] =>
+  this: AbstractCassandraSessionContext[_] =>
 
   implicit def udtDecoder[T <: Udt]: Decoder[T] = macro UdtEncodingMacro.udtDecoder[T]
   implicit def udtEncoder[T <: Udt]: Encoder[T] = macro UdtEncodingMacro.udtEncoder[T]

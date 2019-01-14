@@ -1,13 +1,13 @@
 package io.getquill.context.cassandra.encoding
 
-import io.getquill.context.cassandra.CassandraSessionContext
+import io.getquill.context.cassandra.AbstractCassandraSessionContext
 import io.getquill.context.cassandra.util.ClassTagConversions.asClassOf
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
 
 trait CollectionDecoders {
-  this: CassandraSessionContext[_] =>
+  this: AbstractCassandraSessionContext[_] =>
 
   implicit def listDecoder[T, Cas: ClassTag](implicit mapper: CassandraMapper[Cas, T]): Decoder[List[T]] =
     decoder((index, row) => row.getList[Cas](index, asClassOf[Cas]).asScala.map(mapper.f).toList)

@@ -1,11 +1,12 @@
 package io.getquill
 
-import com.typesafe.config.Config
-import io.getquill.util.{ ContextLogger, LoadConfig }
-import io.getquill.context.cassandra.CassandraSessionContext
-import scala.collection.JavaConverters._
 import com.datastax.driver.core.Cluster
+import com.typesafe.config.Config
+import io.getquill.context.cassandra.CassandraSessionContext
 import io.getquill.monad.SyncIOMonad
+import io.getquill.util.{ ContextLogger, LoadConfig }
+
+import scala.collection.JavaConverters._
 
 class CassandraSyncContext[N <: NamingStrategy](
   naming:                     N,
