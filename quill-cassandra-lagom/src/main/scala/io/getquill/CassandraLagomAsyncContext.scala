@@ -1,12 +1,13 @@
 package io.getquill
 
-import akka.Done
+import akka.{Done, NotUsed}
+import akka.stream.scaladsl.Source
 import com.lightbend.lagom.scaladsl.persistence.cassandra.CassandraSession
 import io.getquill.context.cassandra.CassandraLagomSessionContext
 import io.getquill.monad.ScalaFutureIOMonad
 import io.getquill.util.ContextLogger
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 class CassandraLagomAsyncContext[N <: NamingStrategy](
   naming:  N,
@@ -54,11 +55,12 @@ class CassandraLagomAsyncContext[N <: NamingStrategy](
     }
   }
 
-  def executeBatchAction(groups: List[BatchGroup])(implicit ec: ExecutionContext): Future[Done] =
-    Future.sequence {
+  def executeBatchAction(groups: List[BatchGroup])(implicit ec: ExecutionContext): Source[Done, NotUsed] = {
+    Source(
       groups.flatMap {
         case BatchGroup(cql, prepare) =>
           prepare.map(executeAction(cql, _))
       }
-    }.map(_ => Done)
+    ).mapAsync(1)(identity)
+  }
 }

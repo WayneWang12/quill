@@ -37,7 +37,7 @@ package object lagom {
     }
   }
 
-  lazy val testAsyncDB = new CassandraLagomAsyncContext(Literal, server.application.cassandraSession) with CassandraTestEntities
+  lazy val testLagomAsyncDB = new CassandraLagomAsyncContext(Literal, server.application.cassandraSession) with CassandraTestEntities
 
   def await[T](f: Future[T]): T = Await.result(f, Duration.Inf)
 }

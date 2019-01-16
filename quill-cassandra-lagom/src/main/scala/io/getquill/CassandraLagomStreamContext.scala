@@ -1,12 +1,12 @@
 package io.getquill
 
 import akka.stream.scaladsl.Source
-import akka.{ Done, NotUsed }
+import akka.{Done, NotUsed}
 import com.lightbend.lagom.scaladsl.persistence.cassandra.CassandraSession
-import io.getquill.context.cassandra.CassandraLagomSessionContext
-import io.getquill.util.{ ContextLogger, Messages }
+import io.getquill.context.cassandra.{AbstractCassandraSessionContext, CassandraLagomSessionContext}
+import io.getquill.util.ContextLogger
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 class CassandraLagomStreamContext[N <: NamingStrategy](
   naming:  N,
@@ -22,7 +22,7 @@ class CassandraLagomStreamContext[N <: NamingStrategy](
   override type RunActionResult = Done
   override type RunBatchActionResult = Done
 
-  def executeQuery[T](cql: String, prepare: Prepare = identityPrepare, extractor: Extractor[T] = identityExtractor)(implicit ec: ExecutionContext): Source[T, NotUsed] = {
+  override def executeQuery[T](cql: String, prepare: Prepare = identityPrepare, extractor: Extractor[T] = identityExtractor)(implicit ec: ExecutionContext): Source[T, NotUsed] = {
     Source.fromFutureSource {
       this.prepareAsync(cql).map(prepare).map {
         case (params, bs) =>
@@ -32,7 +32,7 @@ class CassandraLagomStreamContext[N <: NamingStrategy](
     }.mapMaterializedValue(_ => NotUsed)
   }
 
-  def executeQuerySingle[T](cql: String, prepare: Prepare = identityPrepare, extractor: Extractor[T] = identityExtractor)(implicit ec: ExecutionContext): Future[Option[T]] = {
+  override def executeQuerySingle[T](cql: String, prepare: Prepare = identityPrepare, extractor: Extractor[T] = identityExtractor)(implicit ec: ExecutionContext): Future[Option[T]] = {
     this.prepareAsync(cql).map(prepare).flatMap {
       case (params, bs) =>
         logger.logQuery(cql, params)
@@ -40,12 +40,20 @@ class CassandraLagomStreamContext[N <: NamingStrategy](
     }
   }
 
-  def executeAction[T](cql: String, prepare: Prepare = identityPrepare)(implicit ec: ExecutionContext): Future[Done] = {
-    Messages.fail("Stream context doesn't support action.")
+    def executeAction[T](cql: String, prepare: Prepare = identityPrepare)(implicit ec: ExecutionContext): Future[Done] = {
+    this.prepareAsync(cql).map(prepare).flatMap {
+      case (params, bs) =>
+        logger.logQuery(cql, params)
+        session.executeWrite(bs)
+    }
   }
 
-  def executeBatchAction(groups: List[BatchGroup])(implicit ec: ExecutionContext): Future[Done] = {
-    Messages.fail("Stream context doesn't support action.")
-  }
+  def executeBatchAction(groups: List[BatchGroup])(implicit ec: ExecutionContext): Future[Done] =
+    Future.sequence {
+      groups.flatMap {
+        case BatchGroup(cql, prepare) =>
+          prepare.map(executeAction(cql, _))
+      }
+    }.map(_ => Done)
 
 }
