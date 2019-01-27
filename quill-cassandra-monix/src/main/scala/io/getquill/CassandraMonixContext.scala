@@ -3,7 +3,7 @@ package io.getquill
 import com.datastax.driver.core.{ Cluster, ResultSet, Row }
 import com.typesafe.config.Config
 import io.getquill.context.cassandra.util.FutureConversions.toScalaFuture
-import io.getquill.context.cassandra.{ CassandraSessionContext, CqlIdiom }
+import io.getquill.context.cassandra.{ CqlIdiom }
 import io.getquill.context.monix.{ MonixContext, Runner }
 import io.getquill.util.{ ContextLogger, LoadConfig }
 import monix.eval.Task
@@ -19,7 +19,7 @@ class CassandraMonixContext[N <: NamingStrategy](
   keyspace:                   String,
   preparedStatementCacheSize: Long
 )
-  extends CassandraSessionContext[N](naming, cluster, keyspace, preparedStatementCacheSize)
+  extends CassandraDatastaxSessionContext[N](naming, cluster, keyspace, preparedStatementCacheSize)
   with MonixContext[CqlIdiom, N] {
 
   // not using this here

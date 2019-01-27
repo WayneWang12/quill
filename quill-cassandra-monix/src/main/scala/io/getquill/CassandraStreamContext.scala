@@ -2,7 +2,6 @@ package io.getquill
 
 import com.datastax.driver.core.{ Cluster, ResultSet, Row }
 import com.typesafe.config.Config
-import io.getquill.context.cassandra.CassandraSessionContext
 import io.getquill.context.cassandra.util.FutureConversions.toScalaFuture
 import io.getquill.util.{ ContextLogger, LoadConfig }
 import monix.eval.Task
@@ -18,7 +17,7 @@ class CassandraStreamContext[N <: NamingStrategy](
   keyspace:                   String,
   preparedStatementCacheSize: Long
 )
-  extends CassandraSessionContext[N](naming, cluster, keyspace, preparedStatementCacheSize) {
+  extends CassandraDatastaxSessionContext[N](naming, cluster, keyspace, preparedStatementCacheSize) {
 
   def this(naming: N, config: CassandraContextConfig) = this(naming, config.cluster, config.keyspace, config.preparedStatementCacheSize)
   def this(naming: N, config: Config) = this(naming, CassandraContextConfig(config))

@@ -6,7 +6,6 @@ import io.getquill.context.cassandra.util.FutureConversions.toScalaFuture
 import io.getquill.util.{ ContextLogger, LoadConfig }
 import com.typesafe.config.Config
 import scala.collection.JavaConverters._
-import io.getquill.context.cassandra.CassandraSessionContext
 import com.datastax.driver.core.Cluster
 import io.getquill.monad.ScalaFutureIOMonad
 
@@ -16,7 +15,7 @@ class CassandraAsyncContext[N <: NamingStrategy](
   keyspace:                   String,
   preparedStatementCacheSize: Long
 )
-  extends CassandraSessionContext[N](naming, cluster, keyspace, preparedStatementCacheSize)
+  extends CassandraDatastaxSessionContext[N](naming, cluster, keyspace, preparedStatementCacheSize)
   with ScalaFutureIOMonad {
 
   def this(naming: N, config: CassandraContextConfig) = this(naming, config.cluster, config.keyspace, config.preparedStatementCacheSize)

@@ -10,8 +10,8 @@ enablePlugins(TutPlugin)
 lazy val modules = Seq[sbt.ClasspathDep[sbt.ProjectReference]](
   `quill-core-jvm`, `quill-core-js`, `quill-monix`, `quill-sql-jvm`, `quill-sql-js`,
   `quill-jdbc`, `quill-jdbc-monix`, `quill-finagle-mysql`, `quill-finagle-postgres`, `quill-async`,
-  `quill-async-mysql`, `quill-async-postgres`, `quill-cassandra`, `quill-cassandra-monix`, `quill-orientdb`,
-  `quill-spark`
+  `quill-async-mysql`, `quill-async-postgres`, `quill-cassandra`, `quill-cassandra-datastax`,
+  `quill-cassandra-monix`, `quill-orientdb`, `quill-spark`
 )
 
 lazy val `quill` =
@@ -213,14 +213,23 @@ lazy val `quill-cassandra` =
     )
     .dependsOn(`quill-core-jvm` % "compile->compile;test->test")
 
+lazy val `quill-cassandra-datastax` = 
+   (project in file("quill-cassandra-datastax"))
+    .settings(commonSettings: _*)
+    .settings(mimaSettings: _*)
+    .settings(
+      fork in Test := true
+    )
+    .dependsOn(`quill-cassandra` % "compile->compile;test->test")
+
 lazy val `quill-cassandra-monix` =
   (project in file("quill-cassandra-monix"))
     .settings(commonSettings: _*)
     .settings(mimaSettings: _*)
     .settings(
-      fork in Test := true,
+      fork in Test := true
     )
-    .dependsOn(`quill-cassandra` % "compile->compile;test->test")
+    .dependsOn(`quill-cassandra-datastax` % "compile->compile;test->test")
     .dependsOn(`quill-monix` % "compile->compile;test->test")
 
 lazy val `quill-orientdb` =
