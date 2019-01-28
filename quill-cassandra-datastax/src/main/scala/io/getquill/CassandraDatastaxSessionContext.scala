@@ -7,7 +7,6 @@ import io.getquill.context.cassandra.util.FutureConversions._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ ExecutionContext, Future }
-import scala.util.Try
 
 abstract class CassandraDatastaxSessionContext[N <: NamingStrategy](
   val naming:                 N,
@@ -48,10 +47,4 @@ abstract class CassandraDatastaxSessionContext[N <: NamingStrategy](
     session.close
     cluster.close
   }
-
-  def probe(cql: String) =
-    Try {
-      prepare(cql)
-      ()
-    }
 }

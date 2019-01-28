@@ -232,6 +232,23 @@ lazy val `quill-cassandra-monix` =
     .dependsOn(`quill-cassandra-datastax` % "compile->compile;test->test")
     .dependsOn(`quill-monix` % "compile->compile;test->test")
 
+lazy val `quill-cassandra-lagom` =
+   (project in file("quill-cassandra-lagom"))
+    .settings(commonSettings: _*)
+    .settings(mimaSettings: _*)
+    .settings(
+      fork in Test := true,
+      libraryDependencies ++= {
+        val lagomVersion = "1.5.0-RC1"
+        Seq(
+          "com.lightbend.lagom" %% "lagom-scaladsl-persistence-cassandra" % lagomVersion % Provided,
+          "com.lightbend.lagom" %% "lagom-scaladsl-testkit" % lagomVersion % Test
+        )
+      }
+    )
+    .dependsOn(`quill-cassandra` % "compile->compile;test->test")
+
+
 lazy val `quill-orientdb` =
   (project in file("quill-orientdb"))
       .settings(commonSettings: _*)

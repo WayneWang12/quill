@@ -1,23 +1,26 @@
 package io.getquill
 
-import com.datastax.driver.core.Cluster
+import com.datastax.driver.core.{Cluster, Statement}
 import com.typesafe.config.Config
 import io.getquill.monad.SyncIOMonad
-import io.getquill.util.{ ContextLogger, LoadConfig }
+import io.getquill.util.{ContextLogger, LoadConfig}
 
 import scala.collection.JavaConverters._
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 class CassandraSyncContext[N <: NamingStrategy](
-  naming:                     N,
-  cluster:                    Cluster,
-  keyspace:                   String,
-  preparedStatementCacheSize: Long
-)
+                                                 naming: N,
+                                                 cluster: Cluster,
+                                                 keyspace: String,
+                                                 preparedStatementCacheSize: Long
+                                               )
   extends CassandraDatastaxSessionContext[N](naming, cluster, keyspace, preparedStatementCacheSize)
-  with SyncIOMonad {
+    with SyncIOMonad {
 
   def this(naming: N, config: CassandraContextConfig) = this(naming, config.cluster, config.keyspace, config.preparedStatementCacheSize)
+
   def this(naming: N, config: Config) = this(naming, CassandraContextConfig(config))
+
   def this(naming: N, configPrefix: String) = this(naming, LoadConfig(configPrefix))
 
   private val logger = ContextLogger(classOf[CassandraSyncContext[_]])
@@ -33,26 +36,34 @@ class CassandraSyncContext[N <: NamingStrategy](
     super.performIO(io)
   }
 
-  def executeQuery[T](cql: String, prepare: Prepare = identityPrepare, extractor: Extractor[T] = identityExtractor): List[T] = {
-    val (params, bs) = prepare(this.prepare(cql))
-    logger.logQuery(cql, params)
+  import scala.concurrent.duration._
+
+  private def await[T](future: Future[T]) = {
+    Await.result(future, 1.minute)
+  }
+
+  private val ec = scala.concurrent.ExecutionContext.Implicits.global
+
+  override def queryAll[T](preparedRow: Future[Statement], extractor: Extractor[T])(implicit executionContext: ExecutionContext = ec): List[T] = {
+    val bs = await(preparedRow)
     session.execute(bs)
       .all.asScala.toList.map(extractor)
   }
 
-  def executeQuerySingle[T](cql: String, prepare: Prepare = identityPrepare, extractor: Extractor[T] = identityExtractor): T =
-    handleSingleResult(executeQuery(cql, prepare, extractor))
+  override def extractOneFromAll[T](result: List[T])(implicit executionContext: ExecutionContext = ec): T = {
+    handleSingleResult(result)
+  }
 
-  def executeAction[T](cql: String, prepare: Prepare = identityPrepare): Unit = {
-    val (params, bs) = prepare(this.prepare(cql))
-    logger.logQuery(cql, params)
+  override def runAction(preparedRow: Future[Statement])(implicit executionContext: ExecutionContext = ec): Unit = {
+    val bs = await(preparedRow)
     session.execute(bs)
     ()
   }
 
-  def executeBatchAction(groups: List[BatchGroup]): Unit =
+  override def runBatchAction(groups: List[BatchGroup])(implicit executionContext: ExecutionContext = ec): Unit = {
     groups.foreach {
       case BatchGroup(cql, prepare) =>
         prepare.foreach(executeAction(cql, _))
     }
+  }
 }
